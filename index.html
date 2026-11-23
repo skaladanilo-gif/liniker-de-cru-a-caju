@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Liniker, de Cru a Caju</title>
+  <meta name="description" content="Revista independente em capa dura sobre os onze anos de carreira de Liniker, com presskit. Projeto editorial e gráfico de Danilo Costa.">
+  <meta name="theme-color" content="#0B0D24">
+  <meta property="og:title" content="Liniker, de Cru a Caju">
+  <meta property="og:description" content="Folheie a revista em capa dura e abra a caixa do presskit.">
+  <meta property="og:image" content="assets/pages/p01.webp">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/funnel-display-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/funnel-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/site.css">
+  <script type="importmap">
+  {"imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }}
+  </script>
+</head>
+<body>
+  <a class="pular" href="#presskit">Pular para o presskit</a>
+  <div class="cursor" aria-hidden="true"><span class="cursor-texto"></span></div>
+
+  <header class="story">
+    <div class="story-barras" aria-hidden="true"><i data-parte="inicio"><b></b></i><i data-parte="sobre"><b></b></i><i data-parte="presskit"><b></b></i></div>
+    <div class="story-linha">
+      <a class="story-perfil" href="https://danilocosta.netlify.app" rel="noopener">
+        <img class="story-avatar" src="favicon.svg" alt="">
+        <span class="story-nome">Danilo Costa</span>
+        <span class="story-selo">projeto editorial</span>
+      </a>
+      <nav class="story-nav" aria-label="Partes">
+        <a href="#inicio">Revista</a>
+        <a href="#sobre">Sobre</a>
+        <a href="#presskit">Presskit</a>
+      </nav>
+      <p class="story-tempo" aria-live="off"><span class="so-leitor">Tempo nesta página: </span><span data-tempo>00:00</span></p>
+    </div>
+  </header>
+
+  <main>
+    <section class="heroi" id="inicio" aria-labelledby="titulo">
+      <div class="letreiro" aria-hidden="true">
+        <div class="faixa faixa-nome"><div class="trilho"><span>Liniker</span><span>Liniker</span><span>Liniker</span><span>Liniker</span></div></div>
+        <div class="faixa faixa-discos"><div class="trilho">
+          <span><i style="--c:#A57A4A"></i>Cru 2015</span><span><i style="--c:#2E8B57"></i>Remonta 2016</span><span><i style="--c:#D2491F"></i>Goela Abaixo 2019</span><span><i style="--c:#2C3A8C"></i>Indigo Borboleta Anil 2021</span><span><i style="--c:#D7262E"></i>Caju 2024</span>
+          <span><i style="--c:#A57A4A"></i>Cru 2015</span><span><i style="--c:#2E8B57"></i>Remonta 2016</span><span><i style="--c:#D2491F"></i>Goela Abaixo 2019</span><span><i style="--c:#2C3A8C"></i>Indigo Borboleta Anil 2021</span><span><i style="--c:#D7262E"></i>Caju 2024</span>
+        </div></div>
+      </div>
+
+      <canvas class="cena" data-cena="revista" aria-label="Revista em capa dura em 3D"></canvas>
+      <div class="carregando" data-carregando="revista"><span class="tc">00:00</span> Carregando a revista <b data-pct>0%</b></div>
+
+      <div class="heroi-texto">
+        <p class="tc">Revista independente, Nº 01</p>
+        <h1 id="titulo" class="titulo-heroi">Liniker,<br><em>de Cru a Caju</em></h1>
+        <p class="apoio">Onze anos, cinco discos e uma última noite em Salvador. Dezoito páginas em capa dura, com lombada em tecido e título em dourado.</p>
+        <div class="acoes">
+          <button class="botao botao-primario" data-abrir-leitor>Ver a revista</button>
+          <a class="botao botao-fantasma" href="#presskit">Abrir o presskit</a>
+        </div>
+      </div>
+
+      <div class="leitor" data-leitor hidden>
+        <div class="leitor-topo">
+          <p class="tc" aria-live="polite" data-pagina>Capa</p>
+          <p class="leitor-dica">Clique ou arraste a página para virar. Role para aproximar.</p>
+          <button class="botao-redondo" data-fechar-leitor aria-label="Fechar a revista">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div class="leitor-base">
+          <button class="botao-redondo" data-virar="-1" aria-label="Página anterior">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <ol class="espelhos" aria-label="Ir para" data-espelhos></ol>
+          <button class="botao-redondo" data-virar="1" aria-label="Próxima página">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="sobre" id="sobre" aria-labelledby="sobre-titulo">
+      <div class="sobre-topo">
+        <p class="tc">Sobre o projeto</p>
+        <h2 id="sobre-titulo" class="titulo-secao">Cinco discos viraram cinco cores. As cores viraram a revista inteira.</h2>
+      </div>
+      <ol class="discos">
+        <li style="--c:#A57A4A"><span class="ano">2015</span><span class="disco">Cru</span></li>
+        <li style="--c:#2E8B57"><span class="ano">2016</span><span class="disco">Remonta</span></li>
+        <li style="--c:#D2491F"><span class="ano">2019</span><span class="disco">Goela Abaixo</span></li>
+        <li style="--c:#2C3A8C"><span class="ano">2021</span><span class="disco">Indigo Borboleta Anil</span></li>
+        <li style="--c:#D7262E"><span class="ano">2024</span><span class="disco">Caju</span></li>
+      </ol>
+      <div class="sobre-grade">
+        <p>A revista acompanha Liniker do EP <em>Cru</em> ao último show da turnê de <em>Caju</em>. Cada disco abre com a cor da sua capa, e essa paleta passa para a caixa, o marcador e o leque.</p>
+        <p>No papel, o verniz localizado marca o nome, o caju e o sol. Os detalhes em hot stamping dourado ficam no selo da caixa, na lombada, no sol do marcador e no aro do leque.</p>
+      </div>
+      <dl class="ficha">
+        <div><dt>Revista</dt><dd>Capa dura, 21 × 29,7 cm, 18 páginas</dd></div>
+        <div><dt>Caixa</dt><dd>25 × 33 × 7 cm, tampa e fundo</dd></div>
+        <div><dt>Marcador</dt><dd>5 × 20 cm, verniz e hot stamping</dd></div>
+        <div><dt>Leque</dt><dd>24 × 21 cm, verniz e hot stamping</dd></div>
+        <div><dt>Tipografia</dt><dd>Fraunces, Instrument Serif, Source Serif e IBM Plex Mono</dd></div>
+      </dl>
+    </section>
+
+    <section class="palco-presskit" id="presskit" aria-labelledby="presskit-titulo">
+      <canvas class="cena" data-cena="presskit" aria-label="Caixa do presskit em 3D com a revista, o marcador e o leque"></canvas>
+      <div class="carregando" data-carregando="presskit"><span class="tc">00:00</span> Montando a caixa <b data-pct>0%</b></div>
+
+      <div class="painel">
+        <p class="tc">Presskit</p>
+        <h2 id="presskit-titulo" class="titulo-presskit">Abra a caixa</h2>
+        <p class="apoio" data-dica-caixa>Tire a tampa, afaste o papel de seda e pegue cada peça. Passe o mouse para ver o verniz e o dourado brilharem.</p>
+        <button class="botao botao-primario" data-abrir-caixa>Abrir a caixa</button>
+        <ul class="pecas" aria-label="Peças da caixa">
+          <li><button data-peca="revista"><span>Revista</span><span class="tc">capa dura</span></button></li>
+          <li><button data-peca="marcador"><span>Marcador</span><span class="tc">5 × 20</span></button></li>
+          <li><button data-peca="leque"><span>Leque</span><span class="tc">24 × 21</span></button></li>
+        </ul>
+      </div>
+
+      <div class="detalhe" data-detalhe hidden>
+        <p class="tc" data-detalhe-medida></p>
+        <h3 class="detalhe-nome" data-detalhe-nome></h3>
+        <p class="apoio" data-detalhe-texto></p>
+        <div class="acoes">
+          <button class="botao botao-primario" data-folhear hidden>Folhear a revista</button>
+          <button class="botao botao-fantasma" data-voltar>Devolver à caixa</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <p class="rodape-marca">Liniker, de Cru a Caju</p>
+    <p>Projeto editorial e gráfico de <a href="https://danilocosta.netlify.app" rel="noopener">Danilo Costa</a>. Revista independente, sem vínculo com a artista ou sua gravadora. Fotos da Wikimedia Commons, com os créditos em cada página.</p>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
