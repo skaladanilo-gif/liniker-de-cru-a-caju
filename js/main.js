@@ -49,7 +49,7 @@ const heroi = $('#inicio'), leitor = $('[data-leitor]');
 const rotuloPagina = $('[data-pagina]');
 const [antes, depois] = $$('[data-virar]');
 const espelhos = $('[data-espelhos]');
-const nomes = ['Capa', 'Guardas', '2–3', '4–5', '6–7', '8–9', '10–11', '12–13', '14–15', '16–17', 'Guardas', 'Contracapa'];
+const nomes = ['Capa', '2–3', '4–5', '6–7', '8–9', '10–11', '12–13', '14–15', '16–17', 'Contracapa'];
 espelhos.innerHTML = nomes.map((n, i) => `<li><button data-ir="${i}">${n}</button></li>`).join('');
 let cb = { abrir: () => {}, fechar: () => {}, virar: () => {}, ir: () => {} };
 const uiRevista = {

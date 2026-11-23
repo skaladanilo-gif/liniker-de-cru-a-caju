@@ -11,14 +11,13 @@ export async function iniciarRevista(canvas, ui) {
 
   // ---------- textures ----------
   let prontas = 0;
-  const total = 19;
+  const total = 18;
   const conta = (t) => { ui.progresso(++prontas / total); return t; };
   const paginas = await Promise.all(Array.from({ length: 18 }, (_, i) =>
     c.textura(`assets/pages/p${String(i + 1).padStart(2, '0')}.webp`).then(conta)));
-  const guarda = await c.textura('assets/kit2/guarda.webp').then(conta);
   await document.fonts.ready;
 
-  const livro = criarLivro(THREE, { paginas, guarda });
+  const livro = criarLivro(THREE, { paginas });
   const suporte = new THREE.Group();          // rotates the book in the hero
   suporte.add(livro.grupo);
   scene.add(suporte);

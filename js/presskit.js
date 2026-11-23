@@ -9,7 +9,7 @@ const CX = 25, CZ = 33, CY = 7, E = 0.3;          // tray
 const TX = 25.5, TZ = 33.5, TY = 4.6;             // lid
 
 const INFO = {
-  revista: { nome: 'Revista em capa dura', medida: '21 × 29,7 cm, 18 páginas', texto: 'Capa dura com lombada em tecido vermelho e título em hot stamping dourado. Guardas estampadas com o sol do Caju.', ler: true },
+  revista: { nome: 'Revista em capa dura', medida: '21 × 29,7 cm, 18 páginas', texto: 'Capa dura com lombada em tecido vermelho e título em hot stamping dourado. As 18 páginas da revista, da capa à contracapa.', ler: true },
   marcador: { nome: 'Marcador de página', medida: '5 × 20 cm', texto: 'Os cinco discos em ordem, de Cru a Caju. O nome leva verniz localizado e o sol do topo é hot stamping dourado.' },
   leque: { nome: 'Leque', medida: '24 × 21 cm', texto: 'Para a última noite em Salvador. Os raios alternam verniz e papel, e um aro dourado em hot stamping contorna o sol.' },
 };
@@ -23,7 +23,7 @@ export async function iniciarPresskit(canvas, ui) {
   brilho.intensity = 60;
 
   // ---------- textures ----------
-  const kit2 = ['tampa', 'tampa_rough', 'tampa_dentro', 'tampa_lado_longo', 'tampa_lado_curto', 'caixa_lado_longo', 'caixa_lado_curto', 'miolo', 'seda', 'guarda'];
+  const kit2 = ['tampa', 'tampa_rough', 'tampa_dentro', 'tampa_lado_longo', 'tampa_lado_curto', 'caixa_lado_longo', 'caixa_lado_curto', 'miolo', 'seda'];
   const kit = ['marcador', 'marcador_rough', 'leque', 'leque_rough'];
   const total = kit2.length + kit.length + 18;
   let n = 0;
@@ -121,7 +121,7 @@ export async function iniciarPresskit(canvas, ui) {
 
   // ---------- contents ----------
   const paginas = Array.from({ length: 18 }, (_, i) => T[`p${i}`]);
-  const livro = criarLivro(THREE, { paginas, guarda: T.guarda });
+  const livro = criarLivro(THREE, { paginas });
   livro.atualizar(0);
   livro.grupo.position.x = -BW / 2;
   const revista = new THREE.Group();

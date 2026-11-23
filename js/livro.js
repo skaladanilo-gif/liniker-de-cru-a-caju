@@ -5,12 +5,12 @@ import { suave } from './cena.js';
 
 export const PW = 21, PH = 29.7;                 // page (A4)
 export const BW = 21.35, BH = 30.3, BT = 0.26;   // boards: overhang on the fore edge, head and foot
-const N = 9, ESP = 0.034, SEG = 44;
+const N = 7, ESP = 0.034, SEG = 44;
 export const T = N * ESP;                        // text block
 export const ESPESSURA = 2 * BT + T;
-export const ESTADOS = N + 2;                    // front board, 9 leaves, back board
+export const ESTADOS = N + 2;                    // front board, 7 leaves, back board
 
-export const ROTULOS = ['Capa', 'Guardas', ...Array.from({ length: 8 }, (_, i) => `Páginas ${2 * i + 2} e ${2 * i + 3}`), 'Guardas', 'Contracapa'];
+export const ROTULOS = ['Capa', ...Array.from({ length: 8 }, (_, i) => `Páginas ${2 * i + 2} e ${2 * i + 3}`), 'Contracapa'];
 
 const OURO = '#E2B45A';
 
@@ -52,7 +52,6 @@ function lombadaTextura(THREE) {
 export function criarLivro(THREE, tex, { anisotropia = 8 } = {}) {
   const grupo = new THREE.Group();
   const P = tex.paginas;                           // 18 page textures
-  const guarda = tex.guarda;                        // endpaper pattern (repeats)
   const papel = { roughness: 0.66, metalness: 0, envMapIntensity: 0.6 };
 
   const espelhar = (t) => {
@@ -60,43 +59,54 @@ export function criarLivro(THREE, tex, { anisotropia = 8 } = {}) {
     c.wrapS = THREE.RepeatWrapping; c.repeat.x = -1; c.offset.x = 1; c.needsUpdate = true;
     return c;
   };
-  const guardaF = guarda.clone(); guardaF.wrapS = guardaF.wrapT = THREE.RepeatWrapping; guardaF.repeat.set(2.4, 3.3); guardaF.needsUpdate = true;
-  const matGuarda = new THREE.MeshStandardMaterial({ map: guardaF, ...papel });
 
-  // ---------- leaves ----------
-  const pares = [[null, P[1]]];
+  // ---------- leaves: p3/p4 ... p15/p16. p2 is printed inside the front board, p17 inside the back board ----------
+  const pares = [];
   for (let p = 2; p < 16; p += 2) pares.push([P[p], P[p + 1]]);
-  pares.push([P[16], null]);
+  function faces(geo, frente, verso, alvo, sombra = true) {
+    const mF = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: frente, side: THREE.FrontSide, ...papel }));
+    const mV = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: espelhar(verso), side: THREE.BackSide, ...papel }));
+    for (const m of [mF, mV]) { m.castShadow = sombra; m.receiveShadow = true; alvo.add(m); }
+    return [mF, mV];
+  }
   const folhas = pares.map(([f, v], j) => {
     const geo = new THREE.PlaneGeometry(PW, PH, SEG, 1);
     geo.translate(PW / 2, 0, 0);
     geo.rotateX(-Math.PI / 2);
-    const mF = new THREE.Mesh(geo, f ? new THREE.MeshStandardMaterial({ map: f, side: THREE.FrontSide, ...papel }) : matGuarda);
-    const mV = new THREE.Mesh(geo, v ? new THREE.MeshStandardMaterial({ map: espelhar(v), side: THREE.BackSide, ...papel })
-      : new THREE.MeshStandardMaterial({ map: guardaF, side: THREE.BackSide, ...papel }));
-    if (!f) mF.material = new THREE.MeshStandardMaterial({ map: guardaF, side: THREE.FrontSide, ...papel });
-    for (const m of [mF, mV]) { m.castShadow = true; m.receiveShadow = true; grupo.add(m); }
+    faces(geo, f, v, grupo);
     const s = Float32Array.from({ length: geo.attributes.position.count }, (_, k) => geo.attributes.position.getX(k));
     return { tipo: 'folha', j, geo, s, u: 0, alvo: 0, sentido: 1, sujo: true };
   });
 
   // ---------- boards ----------
+  // thickness from a rounded block; the printed pages sit on both faces as planes,
+  // with the same orientation rules as the leaves (front faces up at rest, back is mirrored)
   const borda = new THREE.MeshStandardMaterial({ color: 0xa61d26, roughness: 0.55 });
-  function tabua(topo, baixo) {
-    const geo = new RoundedBoxGeometry(BW, BT, BH, 3, 0.07);
-    const mats = [borda, borda, topo, baixo, borda, borda];
-    const m = new THREE.Mesh(geo, mats);
-    m.position.set(BW / 2, BT / 2, 0);
-    m.castShadow = true; m.receiveShadow = true;
+  const laminado = { roughness: 0.42, clearcoat: 0.35, clearcoatRoughness: 0.5, envMapIntensity: 0.8 };
+  function tabua(texCima, texBaixo, capaEmCima) {
     const piv = new THREE.Group();
-    piv.add(m);
+    const bloco = new THREE.Mesh(new RoundedBoxGeometry(BW, BT, BH, 3, 0.07), borda);
+    bloco.position.set(BW / 2, BT / 2, 0);
+    bloco.castShadow = true; bloco.receiveShadow = true;
+    piv.add(bloco);
+    const geo = new THREE.PlaneGeometry(BW - 0.04, BH - 0.04);
+    geo.translate(BW / 2, 0, 0);
+    geo.rotateX(-Math.PI / 2);
+    const cima = new THREE.Mesh(geo, capaEmCima
+      ? new THREE.MeshPhysicalMaterial({ map: texCima, side: THREE.FrontSide, ...laminado })
+      : new THREE.MeshStandardMaterial({ map: texCima, side: THREE.FrontSide, ...papel }));
+    cima.position.y = BT + 0.004;
+    const baixo = new THREE.Mesh(geo, capaEmCima
+      ? new THREE.MeshStandardMaterial({ map: espelhar(texBaixo), side: THREE.BackSide, ...papel })
+      : new THREE.MeshPhysicalMaterial({ map: espelhar(texBaixo), side: THREE.BackSide, ...laminado }));
+    baixo.position.y = -0.004;
+    cima.receiveShadow = baixo.receiveShadow = true;
+    piv.add(cima, baixo);
     grupo.add(piv);
     return piv;
   }
-  const capaMat = new THREE.MeshPhysicalMaterial({ map: P[0], roughness: 0.42, clearcoat: 0.35, clearcoatRoughness: 0.5, envMapIntensity: 0.8 });
-  const contraMat = new THREE.MeshPhysicalMaterial({ map: P[17], roughness: 0.42, clearcoat: 0.35, clearcoatRoughness: 0.5, envMapIntensity: 0.8 });
-  const frente = { tipo: 'frente', piv: tabua(capaMat, matGuarda), u: 0, alvo: 0, sentido: 1 };
-  const verso = { tipo: 'verso', piv: tabua(matGuarda, contraMat), u: 0, alvo: 0, sentido: 1 };
+  const frente = { tipo: 'frente', piv: tabua(P[0], P[1], true), u: 0, alvo: 0, sentido: 1 };    // cover outside, page 2 inside
+  const verso = { tipo: 'verso', piv: tabua(P[16], P[17], false), u: 0, alvo: 0, sentido: 1 };   // page 17 inside, back cover outside
 
   // ---------- spine ----------
   const ls = lombadaTextura(THREE);
