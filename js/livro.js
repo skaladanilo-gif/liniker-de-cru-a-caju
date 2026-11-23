@@ -127,7 +127,6 @@ export function criarLivro(THREE, tex, { anisotropia = 8 } = {}) {
   grupo.add(lombada);
 
   const itens = [frente, ...folhas, verso];
-  let atual = 0;
 
   // ---------- deformation ----------
   const pts = new Float32Array((SEG + 1) * 2);
@@ -180,26 +179,46 @@ export function criarLivro(THREE, tex, { anisotropia = 8 } = {}) {
     lomGeo.computeBoundingSphere();
   }
 
+  // One number says which spread is open; every board and leaf takes its target from it,
+  // so clicks, drags and jumps can never leave a piece on the wrong side.
+  let estado = 0;
+  const limitar = (n) => Math.max(0, Math.min(ESTADOS, n));
+  function aplicar(passoAtraso = 0) {
+    let k = 0;
+    const ordem = itens.map((it, i) => i);
+    // turn forwards from the spine outwards in reading order, backwards in reverse
+    if (itens.some((it, i) => it.alvo === 1 && i >= estado)) ordem.reverse();
+    for (const i of ordem) {
+      const it = itens[i];
+      if (arrasto && it === arrasto.it) continue;
+      const a = i < estado ? 1 : 0;
+      if (it.alvo !== a) {
+        it.alvo = a;
+        it.sentido = a > it.u ? 1 : -1;
+        it.espera = passoAtraso * k++;
+      }
+    }
+  }
   function virar(passo) {
-    if (passo > 0 && atual < ESTADOS) { const it = itens[atual]; it.alvo = 1; it.sentido = 1; atual++; }
-    else if (passo < 0 && atual > 0) { atual--; const it = itens[atual]; it.alvo = 0; it.sentido = -1; }
-    return atual;
+    if (arrasto) return estado;
+    estado = limitar(estado + Math.sign(passo));
+    aplicar(0);
+    return estado;
   }
-  let fila = [];
   function irPara(n) {
-    fila = [];
-    const dirc = Math.sign(n - atual);
-    for (let k = atual; k !== n; k += dirc) fila.push(dirc);
+    if (arrasto) return;
+    estado = limitar(n);
+    aplicar(0.12);
   }
-  let espera = 0;
 
   // dragging a page by hand
   let arrasto = null;
   function pegar(lado) {
-    const i = lado > 0 ? atual : atual - 1;
+    const i = lado > 0 ? estado : estado - 1;
     if (i < 0 || i >= ESTADOS) return false;
-    arrasto = { it: itens[i], lado };
+    arrasto = { it: itens[i], lado, i };
     arrasto.it.sentido = lado;
+    arrasto.it.espera = 0;
     return true;
   }
   function puxar(lx) {   // lx: pointer x relative to the spine, in cm
@@ -210,19 +229,18 @@ export function criarLivro(THREE, tex, { anisotropia = 8 } = {}) {
   }
   function soltar() {
     if (!arrasto) return;
-    const { it, lado } = arrasto;
-    if (lado > 0) { if (it.u > 0.3) { it.alvo = 1; atual++; } else it.alvo = 0; }
-    else { if (it.u < 0.7) { it.alvo = 0; atual--; } else it.alvo = 1; }
+    const { it, lado, i } = arrasto;
     arrasto = null;
+    if (lado > 0 && it.u > 0.3) estado = limitar(i + 1);
+    if (lado < 0 && it.u < 0.7) estado = limitar(i);
+    it.alvo = -1;               // force aplicar() to set it again
+    aplicar(0);
   }
 
   function atualizar(dt, duracao = 0.9) {
-    if (fila.length) {
-      espera -= dt;
-      if (espera <= 0) { virar(fila.shift()); espera = 0.14; }
-    }
     for (const it of itens) {
       if (arrasto && it === arrasto.it) { if (it.tipo === 'folha') folha(it); continue; }
+      if (it.espera > 0) { it.espera -= dt; continue; }
       if (it.u !== it.alvo) {
         const d = dt / duracao;
         it.u = it.alvo > it.u ? Math.min(it.alvo, it.u + d) : Math.max(it.alvo, it.u - d);
@@ -239,9 +257,10 @@ export function criarLivro(THREE, tex, { anisotropia = 8 } = {}) {
 
   return {
     grupo, virar, irPara, pegar, puxar, soltar, atualizar,
-    get atual() { return atual; },
+    get atual() { return estado; },
+    get pecas() { return itens.map((it) => +it.u.toFixed(3)); },
     get arrastando() { return !!arrasto; },
-    rotulo: () => ROTULOS[atual],
+    rotulo: () => ROTULOS[estado],
     malhas: () => { const m = []; grupo.traverse((o) => o.isMesh && m.push(o)); return m; },
   };
 }

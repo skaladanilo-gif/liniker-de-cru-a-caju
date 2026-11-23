@@ -77,7 +77,7 @@ export async function iniciarRevista(canvas, ui) {
       controls.enableRotate = !toque;
       canvas.style.touchAction = 'none';
       controls.enableZoom = true;
-      if (livro.atual === 0) setTimeout(() => { livro.irPara(1); }, reduzido ? 0 : 650);
+      if (livro.atual === 0) setTimeout(() => { if (livro.atual === 0) livro.irPara(1); }, reduzido ? 0 : 650);
     });
   }
   function fecharLeitor() {
@@ -115,17 +115,17 @@ export async function iniciarRevista(canvas, ui) {
     if (lx < 0 && lx > -BW - 0.5 && a > 0) return { lado: -1, lx };
     return null;
   }
+  // a click turns the page; a drag that starts on a page lifts it by hand
   let toqueIni = null;
   canvas.addEventListener('pointerdown', (e) => {
     const n = noLivro(e);
-    toqueIni = { x: e.clientX, y: e.clientY, n };
-    if (lendo && n && !toque) {
-      livro.pegar(n.lado);
-      controls.enableRotate = false;
-      canvas.setPointerCapture(e.pointerId);
-    }
+    toqueIni = { x: e.clientX, y: e.clientY, n, id: e.pointerId };
+    if (lendo && n) controls.enableRotate = false;      // the camera stays still over the pages
   });
   canvas.addEventListener('pointermove', (e) => {
+    if (lendo && toqueIni?.n && !livro.arrastando && !toque && Math.hypot(e.clientX - toqueIni.x, e.clientY - toqueIni.y) > 6) {
+      if (livro.pegar(toqueIni.n.lado)) canvas.setPointerCapture(toqueIni.id);
+    }
     if (lendo && livro.arrastando) {
       ray.setFromCamera(ndc(canvas, e), camera);
       if (ray.ray.intersectPlane(plano, ponto)) livro.puxar(suporte.worldToLocal(ponto.clone()).x - livro.grupo.position.x);
@@ -135,18 +135,19 @@ export async function iniciarRevista(canvas, ui) {
     if (!lendo) { ui.cursor(n || hoverLivro(e) ? 'Ler' : ''); alvoGiro.y = (e.clientX / innerWidth - 0.5) * 0.35; alvoGiro.x = (e.clientY / innerHeight - 0.5) * 0.12; }
     else ui.cursor(n ? (n.lado > 0 ? 'Virar' : 'Voltar') : '');
   });
-  canvas.addEventListener('pointerup', (e) => {
-    const clique = toqueIni && Math.hypot(e.clientX - toqueIni.x, e.clientY - toqueIni.y) < 6;
-    if (lendo && livro.arrastando) {
-      if (clique) { livro.soltar(); livro.irPara(livro.atual + toqueIni.n.lado); }
-      else livro.soltar();
-      controls.enableRotate = !toque;
-    } else if (clique) {
+  function fim(e) {
+    if (!toqueIni) return;
+    const clique = Math.hypot(e.clientX - toqueIni.x, e.clientY - toqueIni.y) < 6;
+    if (livro.arrastando) livro.soltar();
+    else if (clique) {
       if (!lendo && (toqueIni.n || hoverLivro(e))) abrirLeitor();
       else if (lendo && toqueIni.n) livro.virar(toqueIni.n.lado);
     }
+    if (lendo) controls.enableRotate = !toque;
     toqueIni = null;
-  });
+  }
+  canvas.addEventListener('pointerup', fim);
+  canvas.addEventListener('pointercancel', fim);
   canvas.addEventListener('pointerleave', () => ui.cursor(''));
   const malhas = livro.malhas();
   function hoverLivro(e) {
@@ -178,6 +179,7 @@ export async function iniciarRevista(canvas, ui) {
     else camera.lookAt(controls.target);
     if (livro.atual !== ultimo) { ultimo = livro.atual; ui.pagina(livro.rotulo(), livro.atual); }
   });
+  if (new URLSearchParams(location.search).has('teste')) window.__livro = livro;
   c.ajustar();
   ui.pronto();
   return { abrirLeitor, fecharLeitor };
