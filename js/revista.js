@@ -1,8 +1,12 @@
 // Part 1: the hardcover magazine. In the hero it rests closed on the table; "Ver a revista"
-// opens a full-screen reader where the pages turn by click, drag or keyboard.
+// opens a full-screen reader with flat, even light and sharp pages, where the pages turn by
+// click (folding from the corner you click), drag or keyboard.
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { criarCena, ndc, suave, reduzido } from './cena.js';
-import { criarLivro, BW, PH, ESPESSURA, ESTADOS } from './livro.js';
+import { criarCena, suave, reduzido } from './cena.js';
+import { criarLivro } from './livro.js';
+import { interagir, nitidez } from './paginas.js';
+
+const nome = (i) => String(i + 1).padStart(2, '0');
 
 export async function iniciarRevista(canvas, ui) {
   const c = criarCena(canvas, { fov: 30 });
@@ -11,27 +15,27 @@ export async function iniciarRevista(canvas, ui) {
 
   // ---------- textures ----------
   let prontas = 0;
-  const total = 18;
-  const conta = (t) => { ui.progresso(++prontas / total); return t; };
   const paginas = await Promise.all(Array.from({ length: 18 }, (_, i) =>
-    c.textura(`assets/pages/p${String(i + 1).padStart(2, '0')}.webp`).then(conta)));
+    c.textura(`assets/pages/p${nome(i)}.webp`).then((t) => { ui.progresso(++prontas / 18); return t; })));
   await document.fonts.ready;
 
-  const livro = criarLivro(THREE, { paginas });
-  const suporte = new THREE.Group();          // rotates the book in the hero
+  const livro = criarLivro(THREE, { paginas, capaDura: true });
+  const { BW, PH } = livro;
+  const suporte = new THREE.Group();
   suporte.add(livro.grupo);
   scene.add(suporte);
+  const hd = nitidez({ livro, baixa: paginas, total: 18, carregarHD: (i) => c.textura(`assets/pages/hd/p${nome(i)}.webp`) });
 
-  // ---------- camera poses ----------
+  // ---------- camera ----------
   const controls = new OrbitControls(camera, canvas);
   controls.enabled = false;
   controls.enableDamping = true;
   controls.enablePan = false;
   controls.rotateSpeed = 0.5;
-  controls.minPolarAngle = 0.05;
-  controls.maxPolarAngle = 1.15;
-  controls.minAzimuthAngle = -0.8;
-  controls.maxAzimuthAngle = 0.8;
+  controls.minPolarAngle = 0;
+  controls.maxPolarAngle = 1.1;
+  controls.minAzimuthAngle = -0.7;
+  controls.maxAzimuthAngle = 0.7;
   if (toque) canvas.style.touchAction = 'pan-y';
 
   let lendo = false, w = 1, h = 1;
@@ -39,15 +43,15 @@ export async function iniciarRevista(canvas, ui) {
   const de = { pos: new THREE.Vector3(), alvo: new THREE.Vector3() };
   let tPose = 1;
   function poseHeroi() {
-    const largo = w > 900;
-    const precisa = largo ? Math.max((BW * 1.5) / (camera.aspect * 0.55), PH * 1.2) : Math.max(BW * 1.9 / camera.aspect, PH * 1.6);
+    const precisa = w > 900 ? Math.max((BW * 1.5) / (camera.aspect * 0.55), PH * 1.2) : Math.max(BW * 1.9 / camera.aspect, PH * 1.6);
     const d = precisa / 2 / Math.tan((camera.fov * Math.PI) / 360);
     return { alvo: new THREE.Vector3(0, 0, 0), pos: new THREE.Vector3(-0.42, 0.74, 0.62).normalize().multiplyScalar(d) };
   }
   function poseLeitor() {
-    const precisa = Math.max((2 * BW * 1.12) / camera.aspect, PH * 1.22);
+    // almost straight down, so the text is not foreshortened
+    const precisa = Math.max((2 * BW * 1.08) / camera.aspect, PH * 1.16);
     const d = precisa / 2 / Math.tan((camera.fov * Math.PI) / 360);
-    return { alvo: new THREE.Vector3(0, 0, 0.6), pos: new THREE.Vector3(0, 0.94, 0.34).normalize().multiplyScalar(d) };
+    return { alvo: new THREE.Vector3(0, 0, 0.3), pos: new THREE.Vector3(0, 0.985, 0.17).normalize().multiplyScalar(d) };
   }
   function irPose(p, imediato) {
     de.pos.copy(camera.position); de.alvo.copy(controls.target);
@@ -59,10 +63,18 @@ export async function iniciarRevista(canvas, ui) {
     w = W; h = H;
     c.desvio.alvo = lendo ? 0 : W > 900 ? W * 0.17 : 0;
     c.desvio.y = lendo ? 0 : W > 900 ? 0 : H * 0.14;
-    irPose(lendo ? poseLeitor() : poseHeroi(), true);
-    controls.minDistance = poseLeitor().pos.length() * 0.45;
-    controls.maxDistance = poseLeitor().pos.length() * 1.25;
+    const p = lendo ? poseLeitor() : poseHeroi();
+    irPose(p, true);
+    controls.minDistance = poseLeitor().pos.length() * 0.35;
+    controls.maxDistance = poseLeitor().pos.length() * 1.2;
   });
+
+  // ---------- light: dramatic in the hero, flat and even for reading ----------
+  const luz = {
+    heroi: { key: 2.1, fill: 0.55, hemi: 0.35, env: 0.55 },
+    leitor: { key: 0.9, fill: 0.35, hemi: 1.25, env: 0.25 },
+  };
+  let mistura = 0;
 
   // ---------- reader ----------
   function abrirLeitor() {
@@ -70,13 +82,14 @@ export async function iniciarRevista(canvas, ui) {
     lendo = true;
     ui.lendo(true);
     c.desvio.alvo = 0; c.desvio.y = 0;
+    hd.ligar(true, livro.atual);
     requestAnimationFrame(() => {
       c.ajustar();
       irPose(poseLeitor());
       controls.enabled = true;
       controls.enableRotate = !toque;
-      canvas.style.touchAction = 'none';
       controls.enableZoom = true;
+      canvas.style.touchAction = 'none';
       if (livro.atual === 0) setTimeout(() => { if (livro.atual === 0) livro.irPara(1); }, reduzido ? 0 : 650);
     });
   }
@@ -86,6 +99,7 @@ export async function iniciarRevista(canvas, ui) {
     controls.enabled = false;
     if (toque) canvas.style.touchAction = 'pan-y';
     livro.irPara(0);
+    hd.ligar(false, 0);
     ui.lendo(false);
     requestAnimationFrame(() => { c.ajustar(); irPose(poseHeroi()); });
   }
@@ -101,67 +115,19 @@ export async function iniciarRevista(canvas, ui) {
   });
 
   // ---------- pointer ----------
-  const ray = new THREE.Raycaster();
-  const plano = new THREE.Plane(new THREE.Vector3(0, 1, 0), -ESPESSURA / 2);
-  const ponto = new THREE.Vector3();
-  function noLivro(e) {
-    ray.setFromCamera(ndc(canvas, e), camera);
-    if (!ray.ray.intersectPlane(plano, ponto)) return null;
-    const local = suporte.worldToLocal(ponto.clone());
-    const lx = local.x - livro.grupo.position.x;
-    if (Math.abs(local.z) > PH / 2 + 0.6) return null;
-    const a = livro.atual;
-    if (lx > 0 && lx < BW + 0.5 && a < ESTADOS) return { lado: 1, lx };
-    if (lx < 0 && lx > -BW - 0.5 && a > 0) return { lado: -1, lx };
-    return null;
-  }
-  // a click turns the page; a drag that starts on a page lifts it by hand
-  let toqueIni = null;
-  canvas.addEventListener('pointerdown', (e) => {
-    const n = noLivro(e);
-    toqueIni = { x: e.clientX, y: e.clientY, n, id: e.pointerId };
-    if (lendo && n) controls.enableRotate = false;      // the camera stays still over the pages
-  });
+  const alvoGiro = { x: 0, y: 0 }, giro = { x: 0, y: 0 };
+  interagir({ c, livro, suporte, canvas, controls, toque, ativo: () => lendo, cursor: ui.cursor, aoClicarLivro: abrirLeitor });
   canvas.addEventListener('pointermove', (e) => {
-    if (lendo && toqueIni?.n && !livro.arrastando && !toque && Math.hypot(e.clientX - toqueIni.x, e.clientY - toqueIni.y) > 6) {
-      if (livro.pegar(toqueIni.n.lado)) canvas.setPointerCapture(toqueIni.id);
-    }
-    if (lendo && livro.arrastando) {
-      ray.setFromCamera(ndc(canvas, e), camera);
-      if (ray.ray.intersectPlane(plano, ponto)) livro.puxar(suporte.worldToLocal(ponto.clone()).x - livro.grupo.position.x);
-      return;
-    }
-    const n = noLivro(e);
-    if (!lendo) { ui.cursor(n || hoverLivro(e) ? 'Ler' : ''); alvoGiro.y = (e.clientX / innerWidth - 0.5) * 0.35; alvoGiro.x = (e.clientY / innerHeight - 0.5) * 0.12; }
-    else ui.cursor(n ? (n.lado > 0 ? 'Virar' : 'Voltar') : '');
+    if (lendo) return;
+    alvoGiro.y = (e.clientX / innerWidth - 0.5) * 0.35;
+    alvoGiro.x = (e.clientY / innerHeight - 0.5) * 0.12;
   });
-  function fim(e) {
-    if (!toqueIni) return;
-    const clique = Math.hypot(e.clientX - toqueIni.x, e.clientY - toqueIni.y) < 6;
-    if (livro.arrastando) livro.soltar();
-    else if (clique) {
-      if (!lendo && (toqueIni.n || hoverLivro(e))) abrirLeitor();
-      else if (lendo && toqueIni.n) livro.virar(toqueIni.n.lado);
-    }
-    if (lendo) controls.enableRotate = !toque;
-    toqueIni = null;
-  }
-  canvas.addEventListener('pointerup', fim);
-  canvas.addEventListener('pointercancel', fim);
-  canvas.addEventListener('pointerleave', () => ui.cursor(''));
-  const malhas = livro.malhas();
-  function hoverLivro(e) {
-    ray.setFromCamera(ndc(canvas, e), camera);
-    return ray.intersectObjects(malhas, false).length > 0;
-  }
 
   // ---------- loop ----------
-  const alvoGiro = { x: 0, y: 0 }, giro = { x: 0, y: 0 };
   let ultimo = -1;
   c.tarefas.add((dt, t) => {
     const x = livro.atualizar(dt);
     livro.grupo.position.x += (x - livro.grupo.position.x) * Math.min(1, dt * 5);
-    // hero: the closed book turned three quarters, following the pointer a little
     const heroi = lendo ? 0 : 1;
     giro.x += (alvoGiro.x - giro.x) * Math.min(1, dt * 3);
     giro.y += (alvoGiro.y - giro.y) * Math.min(1, dt * 3);
@@ -169,6 +135,9 @@ export async function iniciarRevista(canvas, ui) {
     suporte.rotation.y += (yaw - suporte.rotation.y) * Math.min(1, dt * 3);
     suporte.rotation.x += (heroi * giro.x - suporte.rotation.x) * Math.min(1, dt * 3);
     suporte.position.y += ((heroi ? 1.2 + (reduzido ? 0 : Math.sin(t * 0.8) * 0.25) : 0) - suporte.position.y) * Math.min(1, dt * 3);
+    mistura += ((lendo ? 1 : 0) - mistura) * Math.min(1, dt * 3);
+    const L = (k) => luz.heroi[k] + (luz.leitor[k] - luz.heroi[k]) * mistura;
+    c.key.intensity = L('key'); c.fill.intensity = L('fill'); c.hemi.intensity = L('hemi'); scene.environmentIntensity = L('env');
     if (tPose < 1) {
       tPose = Math.min(1, tPose + dt / 1.1);
       const k = suave(tPose);
@@ -177,7 +146,11 @@ export async function iniciarRevista(canvas, ui) {
       camera.lookAt(controls.target);
     } else if (controls.enabled) controls.update();
     else camera.lookAt(controls.target);
-    if (livro.atual !== ultimo) { ultimo = livro.atual; ui.pagina(livro.rotulo(), livro.atual); }
+    if (livro.atual !== ultimo) {
+      ultimo = livro.atual;
+      ui.pagina(livro.rotulo(), livro.atual);
+      if (lendo) hd.atualizar(livro.atual);
+    }
   });
   if (new URLSearchParams(location.search).has('teste')) window.__livro = livro;
   c.ajustar();

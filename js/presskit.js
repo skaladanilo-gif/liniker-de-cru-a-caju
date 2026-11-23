@@ -2,7 +2,7 @@
 // pieces (hardcover magazine, bookmark, fan) come out to be looked at. Units: cm.
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { criarCena, cliques, ndc, suave, reduzido } from './cena.js';
-import { criarLivro, BW, BH, ESPESSURA } from './livro.js';
+import { criarLivro } from './livro.js';
 import { materialOuro, mascara, sol, selo } from './ouro.js';
 
 const CX = 25, CZ = 33, CY = 7, E = 0.3;          // tray
@@ -121,7 +121,8 @@ export async function iniciarPresskit(canvas, ui) {
 
   // ---------- contents ----------
   const paginas = Array.from({ length: 18 }, (_, i) => T[`p${i}`]);
-  const livro = criarLivro(THREE, { paginas });
+  const livro = criarLivro(THREE, { paginas, capaDura: true });
+  const { BW, ESPESSURA } = livro;
   livro.atualizar(0);
   livro.grupo.position.x = -BW / 2;
   const revista = new THREE.Group();

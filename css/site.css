@@ -168,7 +168,9 @@ body.lendo .story { opacity: 0; pointer-events: none; }
 .heroi.lendo .letreiro { opacity: 0; }
 .letreiro { transition: opacity var(--m-medio); }
 .leitor { position: absolute; inset: 0; pointer-events: none; display: grid; grid-template-rows: auto 1fr auto; }
-.leitor > * { pointer-events: auto; }
+.leitor, .leitor * { user-select: none; -webkit-user-select: none; }
+.leitor > * { pointer-events: none; }
+.leitor button, .leitor .espelhos { pointer-events: auto; }
 .leitor-topo {
   display: flex; align-items: center; gap: var(--e-4); padding: calc(var(--e-5) + env(safe-area-inset-top, 0px)) var(--margem) 0;
 }

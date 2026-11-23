@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Revista 3D</title>
+  <meta name="description" content="Envie um PDF e folheie como uma revista em 3D.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='5' y='6' width='11' height='20' rx='1.5' fill='%23222'/><rect x='16' y='6' width='11' height='20' rx='1.5' fill='%23777'/></svg>">
+  <link rel="stylesheet" href="estilo.css">
+  <script type="importmap">
+  {"imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+    "pdfjs": "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs"
+  }}
+  </script>
+</head>
+<body>
+  <main class="inicio" data-inicio>
+    <h1>Revista 3D</h1>
+    <p>Envie um PDF e folheie como uma revista.</p>
+    <label class="soltar" data-soltar>
+      <input type="file" accept="application/pdf,.pdf" data-arquivo>
+      <span class="botao">Escolher PDF</span>
+      <span class="dica">ou arraste o arquivo para cá</span>
+    </label>
+    <p class="nota">O arquivo abre no seu navegador. Nada é enviado para a internet.</p>
+    <p class="erro" data-erro hidden></p>
+  </main>
+
+  <section class="leitor" data-leitor hidden>
+    <canvas class="cena" aria-label="Revista em 3D. Use as setas do teclado para virar as páginas."></canvas>
+    <p class="carregando" data-carregando>Preparando as páginas <b data-pct>0%</b></p>
+    <header class="topo">
+      <p class="nome" data-nome></p>
+      <button class="botao fantasma" data-outro>Outro PDF</button>
+    </header>
+    <nav class="base" aria-label="Páginas">
+      <button class="redondo" data-virar="-1" aria-label="Página anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <p class="pagina" aria-live="polite" data-pagina></p>
+      <button class="redondo" data-virar="1" aria-label="Próxima página">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </nav>
+  </section>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

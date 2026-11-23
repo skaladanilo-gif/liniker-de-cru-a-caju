@@ -35,7 +35,8 @@ export function criarCena(canvas, { fov = 32 } = {}) {
   const fill = new THREE.DirectionalLight(0xb8c4ff, 0.55);
   fill.position.set(40, 30, -20);
   scene.add(fill);
-  scene.add(new THREE.HemisphereLight(0xdfe4ff, 0x14183a, 0.35));
+  const hemi = new THREE.HemisphereLight(0xdfe4ff, 0x14183a, 0.35);
+  scene.add(hemi);
 
   // a moving light that catches the spot varnish
   const brilho = new THREE.PointLight(0xffffff, 0, 90, 1.6);
@@ -93,7 +94,7 @@ export function criarCena(canvas, { fov = 32 } = {}) {
     else camera.setViewOffset(w, h, -desvio.atual, -desvio.y, w, h);
   });
 
-  return { THREE, renderer, scene, camera, key, brilho, mesa, tarefas, aoAjustar, ajustar, textura, desvio };
+  return { THREE, renderer, scene, camera, key, fill, hemi, brilho, mesa, tarefas, aoAjustar, ajustar, textura, desvio };
 }
 
 // pointer helper: tells a click from a drag
